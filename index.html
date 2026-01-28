@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Musiquinhas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Musiquinhas</h1>
+
+<h2>Feitas para você</h2>
+
+<div class="lista">
+
+  <div class="musica" onclick="tocar('song/song1.mp3','Song 1','Artista')">
+    <strong>Song 1</strong>
+    <span>Artista • 2023</span>
+  </div>
+
+  <div class="musica" onclick="tocar('song/song2.mp3','Song 2','Artista')">
+    <strong>Song 2</strong>
+    <span>Artista • 2023</span>
+  </div>
+
+  <div class="musica" onclick="tocar('song/song3.mp3','Song 3','Artista')">
+    <strong>Song 3</strong>
+    <span>Artista • 2023</span>
+  </div>
+
+  <div class="musica" onclick="tocar('song/song4.mp3','Chaos','Puxa Pena')">
+    <strong>Chaos</strong>
+    <span>Puxa Pena • 2024</span>
+  </div>
+
+</div>
+
+<!-- PLAYER SIMPLES (igual o antigo) -->
+<div class="player">
+  <div class="info">
+    <span id="titulo">Nenhuma música</span>
+    <small id="artista">—</small>
+  </div>
+
+  <audio id="audio"></audio>
+
+  <div class="controles">
+    <button onclick="playPause()">▶️ / ⏸</button>
+    <input type="range" id="progresso" value="0">
+    <a id="download" download>⬇️</a>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
