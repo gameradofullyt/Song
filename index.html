@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo da Música</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#800020">
+    <style>
+        /* --- MANTENDO SEU CSS ORIGINAL --- */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #181818;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B3B3B3;
+            --header-bg: #000000;
+            --vinho: #800020; 
+            --blue-active: #007bff;
+            --neon-glow: rgba(128, 0, 32, 0.6);
+            --dynamic-color: #800020; /* Variável para a cor da capa */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Circular Std', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding-bottom: 120px; 
+        }
+
+        header {
+            background-color: var(--header-bg);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 20px;
+        }
+
+        .logo { font-weight: bold; color: #e91e63; font-size: 1.2rem; white-space: nowrap; }
+
+        .search-container { flex-grow: 1; max-width: 400px; position: relative; }
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--vinho);
+            background-color: #1a1a1a;
+            color: white;
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-input:focus { border-color: #ff0040; box-shadow: 0 0 8px rgba(128, 0, 32, 0.5); }
+
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+
+        /* --- FILTROS --- */
+        .filters-section { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .filter-dropdown { position: relative; display: inline-block; }
+        
+        .filter-btn, .all-btn { 
+            background-color: #1a1a1a; 
+            color: var(--text-primary); 
+            border: 2px solid var(--vinho); 
+            padding: 10px 25px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: all 0.2s; 
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+        
+        .filter-btn:hover, .all-btn:hover { background-color: var(--vinho); color: white; }
+
+        .dropdown-content { 
+            display: none; 
+            position: absolute; 
+            background-color: #121212; 
+            min-width: 180px; 
+            z-index: 101; 
+            top: 110%; 
+            left: 0; 
+            padding: 8px;
+            border-radius: 12px;
+        }
+        .dropdown-content a { 
+            color: var(--text-secondary); 
+            padding: 10px 15px; 
+            text-decoration: none; 
+            display: block; 
+            border: 1px solid var(--vinho); 
+            margin-bottom: 6px; 
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .dropdown-content a:hover { background-color: var(--vinho); color: white; }
+        .show { display: block; }
+
+        /* SEÇÃO RECENTES */
+        .recent-section { margin-bottom: 40px; display: none; overflow: hidden; }
+        .section-title { margin-bottom: 15px; font-size: 1.4rem; color: var(--vinho); border-left: 4px solid var(--vinho); padding-left: 10px; }
+        
+        .recent-carousel {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--vinho) transparent;
+        }
+        .recent-carousel::-webkit-scrollbar { height: 6px; }
+        .recent-carousel::-webkit-scrollbar-thumb { background: var(--vinho); border-radius: 10px; }
+        
+        .recent-carousel .music-card {
+            flex: 0 0 180px; 
+        }
+
+        .music-grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 20px; 
+            align-items: start;
+        }
+        
+        @media (max-width: 1000px) { .music-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 800px) { .music-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 550px) { 
+            .music-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } 
+            .recent-carousel .music-card { flex: 0 0 140px; }
+        }
+
+        .music-card { 
+            background-color: var(--card-bg); 
+            padding: 15px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: background-color 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-width: 0;
+        }
+        
+        .music-card:hover { background-color: #282828; transform: translateY(-5px); }
+        
+        .card-image { 
+            width: 100%; 
+            aspect-ratio: 1 / 1; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: block;
+        }
+        
+        .card-title { 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            font-size: 0.95rem;
+        }
+        
+        .card-info { 
+            color: var(--text-secondary); 
+            font-size: 0.85rem; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        .icon-svg { width: 1em; height: 1em; fill: currentColor; display: block; }
+
+        /* --- MINI PLAYER --- */
+        .bottom-player-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 85px;
+            background-color: var(--card-bg); 
+            border-top: 2px solid var(--vinho); 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            z-index: 999;
+            cursor: pointer;
+        }
+
+        .mini-info { display: flex; align-items: center; gap: 15px; pointer-events: none; overflow: hidden; }
+        
+        .mini-art { 
+            width: 60px; 
+            height: 60px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid #333;
+            flex-shrink: 0;
+            -webkit-mask-image: radial-gradient(circle, transparent 12%, black 13%);
+            mask-image: radial-gradient(circle, transparent 12%, black 13%);
+            animation: spinCD 3s linear infinite;
+            animation-play-state: paused;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        @keyframes spinCD { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .mini-text { display: flex; flex-direction: column; overflow: hidden; }
+        .mini-title { font-size: 1rem; font-weight: bold; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mini-subtitle { font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .mini-controls { display: flex; gap: 20px; align-items: center; flex-shrink: 0; }
+        .mini-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* --- PLAYER MODAL --- */
+        .player-modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.85); 
+            backdrop-filter: blur(10px); 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        #dynamicBg {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(128, 0, 32, 0.4) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -2;
+            transition: background 0.8s ease;
+            filter: blur(80px);
+        }
+
+        .player-container { 
+            background: linear-gradient(to bottom, #2c2c2c, #121212); 
+            width: 90%; 
+            max-width: 400px; 
+            padding: 30px; 
+            border-radius: 30px; 
+            box-shadow: 0 0 15px var(--dynamic-color); 
+            border: 2px solid var(--dynamic-color); /* BORDA DINÂMICA */
+            text-align: center; 
+            position: relative; 
+            z-index: 1; 
+            transition: transform 0.3s ease, box-shadow 0.5s ease, border-color 0.8s ease;
+            animation: neonPulse 2s infinite alternate;
+        }
+
+        @keyframes neonPulse {
+            from { box-shadow: 0 0 10px var(--dynamic-color); }
+            to { box-shadow: 0 0 30px var(--dynamic-color); }
+        }
+        
+        .player-container.with-lyrics { transform: translateX(-100px); }
+
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; color: var(--text-secondary); cursor: pointer; padding: 10px; }
+        .player-art { width: 100%; aspect-ratio: 1/1; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 25px; object-fit: cover; }
+        
+        .player-info { text-align: left; margin-bottom: 10px; }
+        .player-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+        .player-artist { color: var(--text-secondary); font-size: 1.1rem; }
+
+        .extra-controls { display: flex; justify-content: flex-end; margin-bottom: 5px; gap: 15px; }
+        .extra-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem; transition: 0.2s; }
+        .extra-btn:hover, .extra-btn.active { color: var(--text-primary); }
+
+        .progress-container { margin-bottom: 20px; position: relative; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 5px; background: #333; outline: none; cursor: pointer; position: relative; z-index: 2; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--text-primary); cursor: pointer; border: 2px solid var(--vinho); }
+        
+        .time-stamps { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.8rem; margin-top: 8px; }
+
+        /* --- CONTROLES CENTRALIZADOS E AJUSTADOS --- */
+        .controls { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 15px; 
+            margin-bottom: 20px; 
+        }
+        .control-btn { 
+            background: none; 
+            border: none; 
+            color: var(--text-primary); 
+            font-size: 3.5rem; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: 0.2s; 
+        }
+        .control-btn:hover { opacity: 0.8; }
+        
+        .replay-btn { 
+            font-size: 2.2rem !important; /* Diminuído como solicitado */
+        }
+        .replay-btn.active { color: var(--blue-active); }
+
+        .footer-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .volume-container { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); flex-grow: 1; }
+        
+        .speed-control { color: var(--text-secondary); font-size: 0.8rem; font-weight: bold; cursor: pointer; border: 1px solid #444; padding: 2px 8px; border-radius: 5px; transition: 0.2s; }
+        .speed-control:hover { border-color: var(--text-primary); color: var(--text-primary); }
+
+        .lyrics-panel {
+            position: absolute;
+            right: -220px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            height: 80%;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            color: white;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.4s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .lyrics-panel.show { opacity: 1; pointer-events: all; right: -210px; }
+        @media (max-width: 700px) {
+            .player-container.with-lyrics { transform: translateY(-50px); }
+            .lyrics-panel { position: relative; right: 0; transform: none; width: 100%; height: 150px; margin-top: 20px; opacity: 1; display: none; }
+            .lyrics-panel.show { display: block; right: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Mundo da Música</div>
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar música ou artista...">
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="recent-section" id="recentSection">
+            <h2 class="section-title">Ouvidas Recentemente</h2>
+            <div class="recent-carousel" id="recentGrid"></div>
+        </section>
+
+        <section class="filters-section">
+            <div class="filter-dropdown">
+                <button class="filter-btn" onclick="toggleDropdown('genreDropdown')">Gênero</button>
+                <div id="genreDropdown" class="dropdown-content">
+                    <a href="#">Sertanejo</a><a href="#">Metal</a><a href="#">Funk</a><a href="#">Trap</a><a href="#">Phonk</a><a href="#">Geek</a><a href="#">Rock</a>
+                </div>
+            </div>
+            <div class="filter-dropdown">
+                <button class="filter-btn" onclick="toggleDropdown('artistDropdown')">Cantor(a)</button>
+                <div id="artistDropdown" class="dropdown-content">
+                    <a href="#">Artistas Pop</a><a href="#">Bandas</a>
+                </div>
+            </div>
+             <div class="filter-dropdown">
+                <button class="filter-btn" onclick="toggleDropdown('versionDropdown')">Versão</button>
+                <div id="versionDropdown" class="dropdown-content">
+                    <a href="#">Normal</a><a href="#">Speed Up</a><a href="#">Slowed</a>
+                </div>
+            </div>
+            <a href="song.html" class="all-btn">Todos</a>
+        </section>
+
+        <section class="music-grid" id="musicGrid"></section>
+    </div>
+
+    <div class="bottom-player-bar" id="miniPlayer" onclick="reopenPlayer()">
+        <div class="mini-info">
+            <img src="" alt="" class="mini-art" id="miniArt">
+            <div class="mini-text">
+                <span class="mini-title" id="miniTitle">Nenhuma música</span>
+                <span class="mini-subtitle" id="miniSubtitle">Toque para ouvir</span>
+            </div>
+        </div>
+        <div class="mini-controls">
+            <button class="mini-btn" onclick="event.stopPropagation(); prevTrack()">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button class="mini-btn" id="miniPlayBtn" onclick="event.stopPropagation(); togglePlayPause()">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="mini-btn" onclick="event.stopPropagation(); nextTrack()">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zm9-12h2v12h-2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="playerModal" class="player-modal">
+        <canvas id="particle-canvas"></canvas>
+        <div id="dynamicBg"></div> 
+        <div class="player-container" id="playerContainer">
+            <span class="close-btn" onclick="closePlayer()">&times;</span>
+            <img src="" alt="Capa" class="player-art" id="playerArt" crossorigin="anonymous">
+            
+            <div class="player-info">
+                <div class="player-title" id="playerTitle">...</div>
+                <div class="player-artist" id="playerArtist">...</div>
+            </div>
+
+            <div class="extra-controls">
+                <button class="extra-btn" id="lyricsBtn" onclick="toggleLyrics()" title="Letras">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9v-2h2v2zm0-4H9V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+                </button>
+                <button class="extra-btn" onclick="downloadTrack()" title="Baixar música">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </button>
+            </div>
+
+            <div class="progress-container">
+                <input type="range" id="progressBar" value="0" min="0" step="0.1">
+                <div class="time-stamps">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">--:--</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn replay-btn" id="replayBtn" onclick="toggleReplay()">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
+                <button class="control-btn" onclick="prevTrack()">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+                <button class="control-btn" id="playPauseBtn" onclick="togglePlayPause()">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="control-btn" onclick="nextTrack()">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6zm9-12h2v12h-2z"/></svg>
+                </button>
+            </div>
+
+             <div class="footer-controls">
+                <div class="volume-container">
+                    <span>&#128266;</span>
+                    <input type="range" id="volumeBar" value="1" min="0" max="1" step="0.05">
+                </div>
+                <div class="speed-control" id="speedBtn" onclick="changePlaybackSpeed()">1x</div>
+            </div>
+
+            <div id="lyricsPanel" class="lyrics-panel">
+                <p id="lyricsText">Letras não disponíveis para esta faixa.</p>
+            </div>
+        </div>
+    </div>
+
+    <audio id="mainAudio" preload="auto"></audio>
+
+    <script>
+        const musicData = [
+            { title: "To The Wilder", artist: "Yoann Limoine", year: "2025", cover: "https://images.genius.com/9dd449a8e89ca5b839fbaf853472b431.1000x1000x1.png", src: "musicas/tothewilder.mp3", lyrics: "In the wilder...\nBeyond the light...\nWe seek the truth\nIn the dead of night." },
+            { title: "Crime Vai e Vem", artist: "Racionais MC's", year: "1994", cover: "https://images.genius.com/22ebdf398db0ea60a444481c562b7ada.300x300x1.jpg", src: "musicas/crimevaievem.mp3" },
+            { title: "Judas", artist: "7 Minutoz", year: "2024", cover: "https://i.ytimg.com/vi/6b02hELah9Y/maxresdefault.jpg", src: "musicas/judassetemz.mp3" },
+            { title: "Alone", artist: "Alan Walker", year: "2016", cover: "https://d1csarkz8obe9u.cloudfront.net/posterpreviews/alone-album-cover-design-template-e89a111bbb60d0f5e5e7d1e6a79e20ba_screen.jpg?ts=1730154673", src: "musicas/alone.mp3" },
+            { title: "Faded", artist: "Alan Walker", year: "2015", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlgupPmfq0uEOBx2_JTi6rcLCAMN8XfCHIHCi-z1xz9Q&s=10", src: "musicas/faded.mp3" },
+            { title: "Angel", artist: "Massive Attack", year: "1998", cover: "https://upload.wikimedia.org/wikipedia/en/9/9d/Angelmassiveattack.jpg", src: "musicas/massiveattack.mp3" },
+            { title: "Aura e Ego", artist: "Dexter Wayne", year: "2025", cover: "https://i.ytimg.com/vi/J0MQg_Wppnw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAivZ6ICmVi15RqpOH-UtRSJo5eiQ", src: "musicas/auraeego.mp3" },
+            { title: "Corre", artist: "Dexter Wayne", year: "2025", cover: "https://cdn-images.dzcdn.net/images/cover/efdf58f967c45d3abb154c132dd6f558/1900x1900-000000-80-0-0.jpg", src: "musicas/corre.mp3" },
+            { title: "Sim, Eu Vou", artist: "AuthenticGames", year: "2015", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxVkonZLdi46iLfFR1p-ktBooVLOKJ9vAQs0KwCi3cSr6PHDVmELtlUUA&s=10", src: "musicas/elasemprelogava.mp3" },
+            { title: "Lovely", artist: "Billie Eilish", year: "2018", cover: "https://i.ytimg.com/vi/V1Pl8CzNzCw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC_EMN6D3mWfV99rj_mAM8lTDus5A", src: "musicas/lovely.mp3" },
+            { title: "Despacito", artist: "Luis Fonsi", year: "2017", cover: "https://i.ytimg.com/vi/kJQP7kiw5Fk/maxresdefault.jpg", src: "musicas/despacito.mp3" },
+            { title: "Aura e Ego 2", artist: "Dexter Wayne", year: "2025", cover: "https://i.ytimg.com/vi/vttgm4EcIFQ/mqdefault.jpg", src: "musicas/auraeegodois.mp3" },
+            { title: "Lovely", artist: "TINN", year: "2022", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNkwwHWL3J_fMUx3hh-8G2NdifobaLbNroveHnvsf3yg&s=10", src: "musicas/lovelybr.mp3" },
+            { title: "Até Voce Voltar", artist: "Henrique & Jukiano", year: "2014", cover: "https://i.scdn.co/image/ab67616d0000b273c383b9d0fe85cd957a02bde6", src: "musicas/atevocevoltar.mp3" },
+            { title: "Rap Tropa de Elite", artist: "AllPlace Br", year: "2007", cover: "https://i1.sndcdn.com/artworks-000250505551-5fcdmv-t500x500.jpg", src: "musicas/raptropadeelite.mp3" },
+            { title: "Judas", artist: "Mc Romeu", year: "2012", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnLCxN5LiovaXcowOT4meC09PiiWOENU_89zS7y04NMQ&s=10", src: "musicas/judasromeu.mp3" },
+            { title: "Hold On", artist: "Chord Overstreet", year: "2017", cover: "https://cdn-images.dzcdn.net/images/cover/b141c047989193182127d9676d46e797/0x1900-000000-80-0-0.jpg", src: "musicas/holdon.mp3" },
+            { title: "Dance Monkey", artist: "Tones and I", year: "2019", cover: "https://upload.wikimedia.org/wikipedia/pt/f/f6/Dance_Monkey_capa.jpg", src: "musicas/dancemonkey.mp3" },
+            { title: "Coração Partido", artist: "Macaia", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY9ORSEvq1vYm5gAMOa6yLNGP85ephoDsBRO6O6lDsng&s=10", src: "musicas/coracaopartido.mp3" },
+            { title: "Morena", artist: "Luan Santana", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIEPl_sf2DQCXnmX7f6a3u5kKWNHoeZvXx2U1EUVqNnADRaY1txe3nr41c&s=10", src: "musicas/morena.mp3" },
+            { title: "A Vitima", artist: "Racionais MC's", year: "1995", cover: "https://i.scdn.co/image/ab67616d0000b273439d4f2133d7bb56e4bc6f3b", src: "musicas/avitima.mp3" },
+            { title: "Blindão", artist: "Léo Stronda", year: "2018", cover: "https://i1.sndcdn.com/artworks-000093119049-jmoi8v-t500x500.jpg", src: "musicas/blindao.mp3" },
+            { title: "Purgatório", artist: "Luis Fonsi", year: "2017", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVykZBzbpc2QKLRIRirXE2T3AL6DK2SgkDnCHVjXxbiw&s=10", src: "musicas/purgatorio.mp3" },
+            { title: "Gatuno", artist: "Alec", year: "1975", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSpvRS9wmS-fOeWFnbP8lRR6GIc8un1EZ_6h9ffJMiSZKRO73SzAu-o3c&s=10", src: "musicas/gatunoalec.mp3" },
+            { title: "Ocean", artist: "Elsa & Emilie", year: "2021", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYbbKDlu1AJFuA78AIjxXUHVjfnB65np5koQF_zgJuS3ZtkX_3XkjjmWU&s=10", src: "musicas/ocean.mp3" },
+            { title: "Rap Homem-Aranha", artist: "Dexter Wayne", year: "2025", cover: "https://i1.sndcdn.com/artworks-000551718837-63ikpe-t500x500.jpg", src: "musicas/rapmiranha.mp3" },
+            { title: "Aquarela", artist: "Toquinho", year: "1983", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzV1ylLK_SvYZfEO7qK27cvzPS7X4XG53PUBEsFcadMA&s=10", src: "musicas/aquarela.mp3" },
+            { title: "Se Essa Noite Eu Morrer 3", artist: "Sidoka", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaXTGC_azdcsKU8yY2Gxe_8FH6DiWr79bwC82w0aNeTQ&s=10", src: "musicas/essanoitetres.mp3" },
+            { title: "A Praga", artist: "Luan Santana", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIEPl_sf2DQCXnmX7f6a3u5kKWNHoeZvXx2U1EUVqNnADRaY1txe3nr41c&s=10", src: "musicas/apraga.mp3" },
+            { title: "Everybody Knows", artist: "Racionais MC's", year: "1995", cover: "https://i.scdn.co/image/ab67616d0000b273439d4f2133d7bb56e4bc6f3b", src: "musicas/everybodyknows.mp3" },
+            { title: "Farofino", artist: "Billie Eilish", year: "2018", cover: "https://i.ytimg.com/vi/V1Pl8CzNzCw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC_EMN6D3mWfV99rj_mAM8lTDus5A", src: "musicas/farofino.mp3" },
+            { title: "Menina Linda", artist: "Sidoka", year: "2021", cover: "https://images.genius.com/479f73c74af750d47af0170def49ea4e.1000x1000x1.png", src: "musicas/meninalinda.mp3" },
+            { title: "O Pipoqueiro", artist: "Alec", year: "1975", cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Bohemian_Rhapsody.png", src: "musicas/opipoqueiro.mp3" },
+            { title: "Rockstar", artist: "PiuTrap", year: "2022", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNkwwHWL3J_fMUx3hh-8G2NdifobaLbNroveHnvsf3yg&s=10", src: "musicas/piurockstar.mp3" },
+            { title: "A Vitória Chegou", artist: "Dexter Wayne", year: "2025", cover: "https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png", src: "musicas/avitoriachegou.mp3" },
+            { title: "Adeus", artist: "Piuzinho", year: "1975", cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Bohemian_Rhapsody.png", src: "musicas/adeus.mp3" },
+            { title: "Apenas 25", artist: "Macaia", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY9ORSEvq1vYm5gAMOa6yLNGP85ephoDsBRO6O6lDsng&s=10", src: "musicas/apenas.mp3" },
+            { title: "Rap do Solitário", artist: "Luan Santana", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIEPl_sf2DQCXnmX7f6a3u5kKWNHoeZvXx2U1EUVqNnADRaY1txe3nr41c&s=10", src: "musicas/rapdosolitario.mp3" },
+            { title: "Runaway", artist: "Racionais MC's", year: "1995", cover: "https://i.scdn.co/image/ab67616d0000b273439d4f2133d7bb56e4bc6f3b", src: "musicas/runaway.mp3" },
+            { title: "See You Again", artist: "Billie Eilish", year: "2018", cover: "https://i.ytimg.com/vi/V1Pl8CzNzCw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC_EMN6D3mWfV99rj_mAM8lTDus5A", src: "musicas/seeyouagain.mp3" },
+            { title: "Plaqtudum", artist: "Luis Fonsi", year: "2017", cover: "https://i.ytimg.com/vi/kJQP7kiw5Fk/maxresdefault.jpg", src: "musicas/plaqtudum.mp3" },
+            { title: "Somebody That I Used", artist: "Alec", year: "1975", cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Bohemian_Rhapsody.png", src: "musicas/somebody.mp3" },
+            { title: "Suco de Fruta", artist: "Elsa x", year: "2022", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNkwwHWL3J_fMUx3hh-8G2NdifobaLbNroveHnvsf3yg&s=10", src: "musicas/sucodefruta.mp3" },
+            { title: "Trap do YgorX", artist: "Dexter Wayne", year: "2025", cover: "https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png", src: "musicas/trapdoygorx.mp3" },
+            { title: "Último Dia", artist: "Queen", year: "1975", cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Bohemian_Rhapsody.png", src: "musicas/ultimodia.mp3" },
+            { title: "Vai Cavala", artist: "Mc Livinho", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY9ORSEvq1vYm5gAMOa6yLNGP85ephoDsBRO6O6lDsng&s=10", src: "musicas/vaicavala.mp3" },
+            { title: "Vampiro de Madureira Speed", artist: "Luan Santana", year: "2025", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIEPl_sf2DQCXnmX7f6a3u5kKWNHoeZvXx2U1EUVqNnADRaY1txe3nr41c&s=10", src: "musicas/vampirodemadureiraspeed.mp3" },
+            { title: "Vida Louca", artist: "Mc Poze do Rodo", year: "1995", cover: "https://i.scdn.co/image/ab67616d0000b273439d4f2133d7bb56e4bc6f3b", src: "musicas/vidaloucapoze.mp3" },
+            { title: "Vida Ta Demais", artist: "Billie Eilish", year: "2018", cover: "https://i.ytimg.com/vi/V1Pl8CzNzCw/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLC_EMN6D3mWfV99rj_mAM8lTDus5A", src: "musicas/vidatademais.mp3" },
+            { title: "Raridade", artist: "Luis Fonsi", year: "2017", cover: "https://i.ytimg.com/vi/kJQP7kiw5Fk/maxresdefault.jpg", src: "musicas/raridade.mp3" },
+            { title: "Puxa Penas", artist: "Alec", year: "1975", cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Bohemian_Rhapsody.png", src: "musicas/puxapenas.mp3" },
+            { title: "Pokebola", artist: "Elsa x", year: "2022", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNkwwHWL3J_fMUx3hh-8G2NdifobaLbNroveHnvsf3yg&s=10", src: "musicas/pokebola.mp3" },
+            { title: "Leen Back", artist: "PiuTrap", year: "2025", cover: "https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png", src: "musicas/piuleenback.mp3" },
+            { title: "Operação Papai Noel", artist: "Queen", year: "1975", cover: "https://upload.wikimedia.org/wikipedia/en/9/9f/Bohemian_Rhapsody.png", src: "musicas/operacaopapainoel.mp3" },
+        ];
+
+        let currentTrackIndex = 0;
+        let isReplayActive = false;
+        let playbackSpeeds = [1, 1.25, 1.5, 2, 0.5, 0.75];
+        let currentSpeedIdx = 0;
+        let recentTracks = JSON.parse(localStorage.getItem('recentTracks')) || [];
+
+        const audio = document.getElementById('mainAudio');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const miniPlayBtn = document.getElementById('miniPlayBtn');
+        const replayBtn = document.getElementById('replayBtn');
+        const progressBar = document.getElementById('progressBar');
+        const miniArt = document.getElementById('miniArt');
+        const musicGrid = document.getElementById('musicGrid');
+        const searchInput = document.getElementById('searchInput');
+        const dynamicBg = document.getElementById('dynamicBg');
+
+        const playSVG = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+        const pauseSVG = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+        window.onload = () => {
+            renderGrid(musicData);
+            renderRecent();
+            const lastMusic = localStorage.getItem('lastPlayedIndex');
+            updateVisualsOnly(lastMusic ? parseInt(lastMusic) : 0);
+            initParticles();
+        };
+
+        function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let particles = [];
+            // AUMENTADO DE 50 PARA 120 PARTICULAS PARA APARECER MAIS
+            for(let i=0; i<120; i++) {
+                particles.push({ 
+                    x: Math.random()*canvas.width, 
+                    y: Math.random()*canvas.height, 
+                    r: Math.random()*2.5, // Bolinhas levemente maiores
+                    d: 0.2 + Math.random()*1.2, // Velocidades variadas
+                    o: 0.1 + Math.random()*0.5 // Opacidade variada
+                });
+            }
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                particles.forEach(p => {
+                    ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+                    p.y -= p.d; if(p.y < 0) p.y = canvas.height;
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        function addToRecent(track) {
+            recentTracks = recentTracks.filter(t => t.src !== track.src);
+            recentTracks.unshift(track);
+            if(recentTracks.length > 10) recentTracks.pop();
+            localStorage.setItem('recentTracks', JSON.stringify(recentTracks));
+            renderRecent();
+        }
+
+        function renderRecent() {
+            const container = document.getElementById('recentSection');
+            const grid = document.getElementById('recentGrid');
+            if(recentTracks.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'block';
+            grid.innerHTML = '';
+            recentTracks.forEach(music => {
+                const card = document.createElement('div');
+                card.classList.add('music-card');
+                card.innerHTML = `<img src="${music.cover}" class="card-image"><div class="card-title">${music.title}</div><div class="card-info">${music.artist}</div>`;
+                card.onclick = () => {
+                    const idx = musicData.findIndex(m => m.src === music.src);
+                    openPlayer(idx);
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function renderGrid(data) {
+            musicGrid.innerHTML = '';
+            data.forEach((music) => {
+                const card = document.createElement('div');
+                card.classList.add('music-card');
+                card.innerHTML = `<img src="${music.cover}" class="card-image"><div class="card-title">${music.title}</div><div class="card-info">${music.artist} • ${music.year}</div>`;
+                card.onclick = () => {
+                    const realIndex = musicData.findIndex(m => m.src === music.src);
+                    openPlayer(realIndex);
+                };
+                musicGrid.appendChild(card);
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = musicData.filter(m => 
+                m.title.toLowerCase().includes(term) || 
+                m.artist.toLowerCase().includes(term)
+            );
+            renderGrid(filtered);
+        });
+
+        function toggleDropdown(id) {
+            document.querySelectorAll('.dropdown-content').forEach(d => { if(d.id !== id) d.classList.remove('show'); });
+            const el = document.getElementById(id);
+            if(el) el.classList.toggle("show");
+        }
+
+        function openPlayer(index) {
+            currentTrackIndex = index;
+            updateVisualsAndPlay();
+            document.getElementById('playerModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // TRAVA O SCROLL
+        }
+
+        function reopenPlayer() { 
+            document.getElementById('playerModal').style.display = 'flex'; 
+            document.body.style.overflow = 'hidden'; // TRAVA O SCROLL
+        }
+        
+        function closePlayer() { 
+            document.getElementById('playerModal').style.display = 'none'; 
+            document.getElementById('playerContainer').classList.remove('with-lyrics');
+            document.getElementById('lyricsPanel').classList.remove('show');
+            document.getElementById('lyricsBtn').classList.remove('active');
+            document.body.style.overflow = 'auto'; // LIBERA O SCROLL
+        }
+
+        function toggleReplay() {
+            isReplayActive = !isReplayActive;
+            replayBtn.classList.toggle('active', isReplayActive);
+        }
+
+        function toggleLyrics() {
+            const panel = document.getElementById('lyricsPanel');
+            const container = document.getElementById('playerContainer');
+            const btn = document.getElementById('lyricsBtn');
+            panel.classList.toggle('show');
+            container.classList.toggle('with-lyrics');
+            btn.classList.toggle('active');
+            const track = musicData[currentTrackIndex];
+            document.getElementById('lyricsText').innerText = track.lyrics || "Letras não encontradas para esta música.";
+        }
+
+        function changePlaybackSpeed() {
+            currentSpeedIdx = (currentSpeedIdx + 1) % playbackSpeeds.length;
+            const newSpeed = playbackSpeeds[currentSpeedIdx];
+            audio.playbackRate = newSpeed;
+            document.getElementById('speedBtn').innerText = newSpeed + 'x';
+        }
+
+        function downloadTrack() {
+            const track = musicData[currentTrackIndex];
+            const link = document.createElement('a');
+            link.href = track.src;
+            link.download = `${track.title} - ${track.artist}.mp3`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // FUNÇÃO PARA PEGAR A COR DA CAPA
+        function getDominantColor(imgEl) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1; canvas.height = 1;
+            ctx.drawImage(imgEl, 0, 0, 1, 1);
+            const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function updateVisualsAndPlay() {
+            const track = musicData[currentTrackIndex];
+            const playerArt = document.getElementById('playerArt');
+            playerArt.src = track.cover;
+            document.getElementById('playerTitle').innerText = track.title;
+            document.getElementById('playerArtist').innerText = `${track.artist} • ${track.year}`;
+            miniArt.src = track.cover;
+            document.getElementById('miniTitle').innerText = track.title;
+            document.getElementById('miniSubtitle').innerText = track.artist;
+            
+            // ATUALIZA A COR DA BORDA DINAMICAMENTE
+            playerArt.onload = () => {
+                const dominantColor = getDominantColor(playerArt);
+                document.documentElement.style.setProperty('--dynamic-color', dominantColor);
+                dynamicBg.style.background = `radial-gradient(circle, ${dominantColor.replace('rgb', 'rgba').replace(')', ', 0.4)')} 0%, rgba(0,0,0,0) 70%)`;
+            };
+
+            if(document.getElementById('lyricsPanel').classList.contains('show')) {
+                document.getElementById('lyricsText').innerText = track.lyrics || "Letras não encontradas para esta música.";
+            }
+
+            localStorage.setItem('lastPlayedIndex', currentTrackIndex);
+            addToRecent(track);
+
+            audio.src = track.src;
+            audio.playbackRate = playbackSpeeds[currentSpeedIdx]; 
+            audio.play().then(() => updatePlayPauseIcons(true)).catch(() => updatePlayPauseIcons(false));
+        }
+
+        function updateVisualsOnly(index) {
+            currentTrackIndex = index;
+            const track = musicData[index];
+            if(!track) return;
+            const playerArt = document.getElementById('playerArt');
+            playerArt.src = track.cover;
+            document.getElementById('playerTitle').innerText = track.title;
+            document.getElementById('playerArtist').innerText = `${track.artist} • ${track.year}`;
+            miniArt.src = track.cover;
+            document.getElementById('miniTitle').innerText = track.title;
+            document.getElementById('miniSubtitle').innerText = track.artist;
+            audio.src = track.src;
+
+            playerArt.onload = () => {
+                const dominantColor = getDominantColor(playerArt);
+                document.documentElement.style.setProperty('--dynamic-color', dominantColor);
+            };
+        }
+
+        function togglePlayPause() {
+            if (audio.paused) { audio.play(); updatePlayPauseIcons(true); } 
+            else { audio.pause(); updatePlayPauseIcons(false); }
+        }
+
+        function updatePlayPauseIcons(isPlaying) {
+            const svgContent = isPlaying ? pauseSVG : playSVG;
+            playPauseBtn.innerHTML = svgContent;
+            miniPlayBtn.innerHTML = svgContent;
+            miniArt.style.animationPlayState = isPlaying ? 'running' : 'paused';
+        }
+
+        function nextTrack() { currentTrackIndex = (currentTrackIndex + 1) % musicData.length; updateVisualsAndPlay(); }
+        function prevTrack() { currentTrackIndex = (currentTrackIndex - 1 + musicData.length) % musicData.length; updateVisualsAndPlay(); }
+
+        audio.addEventListener('timeupdate', () => {
+            progressBar.value = audio.currentTime;
+            document.getElementById('currentTime').innerText = formatTime(audio.currentTime);
+            const percentage = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.background = `linear-gradient(to right, var(--dynamic-color) ${percentage}%, #333 ${percentage}%)`;
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            progressBar.max = audio.duration;
+            document.getElementById('duration').innerText = formatTime(audio.duration);
+        });
+
+        audio.addEventListener('ended', () => {
+            if (isReplayActive) { audio.currentTime = 0; audio.play(); } else { nextTrack(); }
+        });
+
+        progressBar.oninput = () => audio.currentTime = progressBar.value;
+        document.getElementById('volumeBar').oninput = (e) => audio.volume = e.target.value;
+
+        function formatTime(s) {
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('PWA Service Worker registrado!', reg);
+                }).catch(err => {
+                    console.log('Falha ao registrar Service Worker:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
